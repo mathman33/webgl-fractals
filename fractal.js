@@ -116,11 +116,11 @@
   window.TriangleStrip = TriangleStrip;
 
   window.Models = {
-    "tile": new TriangleStrip([
-       0, 0, 0,
-       0, 600, 0,
-       800, 0, 0,
-       800, 600, 0
+    "quad": new TriangleStrip([
+      -1, -1, 0,
+      -1,  1, 0,
+       1, -1, 0,
+       1,  1, 0
     ])
   };
 })(window);
@@ -159,112 +159,42 @@
 
   // Get the WebGL context
   var gl = canvas.getContext("webgl");
-  //gl.enable(gl. CULL_FACE);
-  window.gl = gl;
 
   // Load the paddle geometry into GPU memory
   var buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, Models["tile"].vertices, gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, Models["quad"].vertices, gl.STATIC_DRAW);
 
   var shaderProgram = makeShaderProgram(gl);
 
-  function Game(gl, model) {
+  function Fractal(gl, model) {
     this.gl = gl;
     this.model = model;
-
-    this.projection = matrixMultiply([
-      new Float32Array([
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 0, 0,
-        0, 0, 0, 1,
-      ]),
-      scaleMatrix(1, -1, 1),
-      scaleMatrix(2/800, 2/600, 1000),
-    ]);
-
-    this.cameraPosition = [400, 300, -500, 1];
-    this.iterations = 50;
-
-    this.keys = {
-      left: 0,
-      right: 0,
-      up: 0,
-      down: 0,
-      forward: 0,
-      backward: 0,
-    };
   }
 
-  Game.prototype.update = function() {
-    this.iterations += 1;
-
-    this.cameraPosition[0] += 5*(this.keys.right - this.keys.left);
-    this.cameraPosition[1] += 5*(this.keys.down - this.keys.up);
-    this.cameraPosition[2] += 5*(this.keys.forward - this.keys.backward);
+  Fractal.prototype.update = function() {
   };
 
-  document.body.onkeydown = function(ev) {
-    if (ev.keyCode == 38 || ev.keyCode == 87) {
-      world.keys.forward = 1;
-    } else if (ev.keyCode == 40 || ev.keyCode == 83) {
-      world.keys.backward = 1;
-    } else if (ev.keyCode == 90) {
-      world.keys.down = 1;
-    } else if (ev.keyCode == 88) {
-      world.keys.up = 1;
-    } else if (ev.keyCode == 65) {
-      world.keys.left = 1;
-    } else if (ev.keyCode == 68) {
-      world.keys.right = 1;
-    }
-  };
+  Fractal.prototype.draw = function() {
+    var gl = this.gl;
 
-  document.body.onkeyup = function(ev) {
-    if (ev.keyCode == 38 || ev.keyCode == 87) {
-      world.keys.forward = 0;
-    } else if (ev.keyCode == 40 || ev.keyCode == 83) {
-      world.keys.backward = 0;
-    } else if (ev.keyCode == 90) {
-      world.keys.down = 0;
-    } else if (ev.keyCode == 88) {
-      world.keys.up = 0;
-    } else if (ev.keyCode == 65) {
-      world.keys.left = 0;
-    } else if (ev.keyCode == 68) {
-      world.keys.right = 0;
-    }
-  };
-
-  Game.prototype.draw = function() {
     // Render the tile geometry
     gl.useProgram(shaderProgram);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT);
 
     var vertexLocation = gl.getAttribLocation(shaderProgram, "a_vertex");
-    var iterationsLocation = gl.getUniformLocation(shaderProgram, "u_iterations");
-    var modelLocation = gl.getUniformLocation(shaderProgram, "u_model");
-    var viewLocation = gl.getUniformLocation(shaderProgram, "u_view");
-    var projectionLocation = gl.getUniformLocation(shaderProgram, "u_projection");
+    var aspectLocation = gl.getUniformLocation(shaderProgram, "u_aspect");
+
+    gl.uniform1f(aspectLocation, 4/3);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.model);
     gl.enableVertexAttribArray(vertexLocation);
     gl.vertexAttribPointer(vertexLocation, 3, gl.FLOAT, false, 0, 0);
 
-    gl.uniform1i(iterationsLocation, this.iterations);
-    gl.uniformMatrix4fv(projectionLocation, false, matrixTranspose(world.projection));
-    gl.uniformMatrix4fv(viewLocation, false, matrixTranspose(translationMatrix(
-      -this.cameraPosition[0],
-      -this.cameraPosition[1],
-      -this.cameraPosition[2]
-    )));
-
-    gl.uniformMatrix4fv(modelLocation, false, identityMatrix());
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
-  var world = new Game(gl, buffer);
+  var world = new Fractal(gl, buffer);
   window.world = world;
 
   (function onAnimationFrame() {
