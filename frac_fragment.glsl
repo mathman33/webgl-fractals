@@ -51,11 +51,11 @@ vec2 polar(float mag, float ang) {
 void main() {
   const int iterations = 1000;
   const int exponent = 10;
-  const float brightness_factor = 0.3;
-  vec2 a = vec2(1.0, 0.9);
+  const float brightness_factor = 5.0;
+  vec2 a = vec2(1.0, 1.0);
   float eps = 0.1;
 
-  vec2 center = vec2(20.0, 3.0);
+  vec2 center = vec2(20.0, 2.0);
   float zoom = pow(2.0, 6.0);
 
   vec2 zeros[exponent];
