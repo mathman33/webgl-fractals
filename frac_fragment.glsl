@@ -51,6 +51,7 @@ vec2 polar(float mag, float ang) {
 void main() {
   const int iterations = 1000;
   const int exponent = 10;
+  const float brightness_factor = 0.3;
   vec2 a = vec2(1.0, 0.9);
   float eps = 0.1;
 
@@ -72,10 +73,10 @@ void main() {
 
     for (int j = 0; j < exponent; j += 1) {
       if (norm(p, zeros[j]) < eps) {
-        b += 1.0;
+        b += brightness_factor*float(j+1);
       }
     }
   }
 
-  gl_FragColor = vec4((2.0*b/float(iterations))*vec3(0.3, 0.55, 0.6), 1.0);
+  gl_FragColor = vec4((b/float(iterations))*vec3(0.3, 0.55, 0.6), 1.0);
 }
