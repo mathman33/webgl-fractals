@@ -2,6 +2,14 @@ precision highp float;
 
 #define PI 3.141592653589793238462643383279
 const int MAX_DEGREE = 300;
+const int ITERATIONS = 400;
+const int EXPONENTS = 3;
+
+uniform vec2 u_center;
+uniform float u_zoom;
+uniform float u_brightness;
+uniform vec2 u_a;
+uniform float u_eps;
 
 varying vec2 v_vertex;
 
@@ -49,34 +57,25 @@ vec2 polar(float mag, float ang) {
 
 
 void main() {
-  const int iterations = 1000;
-  const int exponent = 10;
-  const float brightness_factor = 5.0;
-  vec2 a = vec2(1.0, 1.0);
-  float eps = 0.1;
-
-  vec2 center = vec2(20.0, 2.0);
-  float zoom = pow(2.0, 6.0);
-
-  vec2 zeros[exponent];
-  for (int i = 0; i < exponent; i += 1) {
-    zeros[i] = polar(1.0, float(i)/float(exponent) * 2.0*PI);
+  vec2 zeros[EXPONENTS];
+  for (int i = 0; i < EXPONENTS; i += 1) {
+    zeros[i] = polar(1.0, float(i)/float(EXPONENTS) * 2.0*PI);
   }
 
-  vec2 p = v_vertex / zoom + center;
+  vec2 p = v_vertex / u_zoom + u_center;
   //vec2 p = v_vertex * 2850.0;     // best zoom for degree-6
   //vec2 p = v_vertex * 45000000.0; // best zoom for degree-3
 
   float b = 0.0;
-  for (int i = 0; i < iterations; i += 1) {
-    p -= compmul(a, approximation(p, exponent));
+  for (int i = 0; i < ITERATIONS; i += 1) {
+    p -= compmul(u_a, approximation(p, EXPONENTS));
 
-    for (int j = 0; j < exponent; j += 1) {
-      if (norm(p, zeros[j]) < eps) {
-        b += brightness_factor*float(j+1);
+    for (int j = 0; j < EXPONENTS; j += 1) {
+      if (norm(p, zeros[j]) < u_eps) {
+        b += u_brightness*float(j+1);
       }
     }
   }
 
-  gl_FragColor = vec4((b/float(iterations))*vec3(0.3, 0.55, 0.6), 1.0);
+  gl_FragColor = vec4((b/float(ITERATIONS))*vec3(0.3, 0.55, 0.6), 1.0);
 }

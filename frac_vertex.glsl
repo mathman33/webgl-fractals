@@ -7,5 +7,5 @@ varying vec2 v_vertex;
 
 void main() {
   gl_Position = vec4(a_vertex, 1.0);
-  v_vertex = gl_Position.xy * vec2(u_aspect, 1.0);
+  v_vertex = a_vertex.xy * vec2(u_aspect, 1.0);
 }
