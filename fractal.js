@@ -79,6 +79,7 @@
     var centerLocation = gl.getUniformLocation(shaderProgram, "u_center");
     var zoomLocation = gl.getUniformLocation(shaderProgram, "u_zoom");
     var brightnessLocation = gl.getUniformLocation(shaderProgram, "u_brightness");
+    var exponentLocation = gl.getUniformLocation(shaderProgram, "u_exponent");
     var aLocation = gl.getUniformLocation(shaderProgram, "u_a");
     var epsLocation = gl.getUniformLocation(shaderProgram, "u_eps");
 
@@ -86,6 +87,7 @@
     gl.uniform2fv(centerLocation, this.settings.center);
     gl.uniform1f(zoomLocation, this.settings.zoom);
     gl.uniform1f(brightnessLocation, this.settings.brightness);
+    gl.uniform1i(exponentLocation, this.settings.exponent);
     gl.uniform2fv(aLocation, this.settings.a);
     gl.uniform1f(epsLocation, this.settings.eps);
 

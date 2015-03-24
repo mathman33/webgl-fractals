@@ -3,6 +3,7 @@
   "zoom": 250.0,
   "brightness": 0.5,
 
+  "exponent": 7,
   "a": [1, 0.84],
   "eps": 0.02
 }

@@ -1,13 +1,13 @@
 precision highp float;
 
 #define PI 3.141592653589793238462643383279
-const int MAX_DEGREE = 300;
+const int MAX_DEGREE = 16;
 const int ITERATIONS = 400;
-const int EXPONENTS = 7;
 
 uniform vec2 u_center;
 uniform float u_zoom;
 uniform float u_brightness;
+uniform int u_exponent;
 uniform vec2 u_a;
 uniform float u_eps;
 
@@ -27,9 +27,7 @@ vec2 compdiv(vec2 a, vec2 b){
 vec2 comppow(vec2 a, int n) {
   vec2 r = vec2(1.0, 0.0);
   for (int i = 0; i < MAX_DEGREE; ++i) {
-    if (n <= i) {
-      break;
-    }
+    if (n <= i) break;
     r = compmul(r, a);
   }
   return r;
@@ -57,9 +55,10 @@ vec2 polar(float mag, float ang) {
 
 
 void main() {
-  vec2 zeros[EXPONENTS];
-  for (int i = 0; i < EXPONENTS; i += 1) {
-    zeros[i] = polar(1.0, float(i)/float(EXPONENTS) * 2.0*PI);
+  vec2 zeros[MAX_DEGREE];
+  for (int i = 0; i < MAX_DEGREE; i += 1) {
+    if (u_exponent <= i) break;
+    zeros[i] = polar(1.0, float(i)/float(u_exponent) * 2.0*PI);
   }
 
   vec2 p = v_vertex / u_zoom + u_center;
@@ -68,9 +67,10 @@ void main() {
 
   float b = 0.0;
   for (int i = 0; i < ITERATIONS; i += 1) {
-    p -= compmul(u_a, approximation(p, EXPONENTS));
+    p -= compmul(u_a, approximation(p, u_exponent));
 
-    for (int j = 0; j < EXPONENTS; j += 1) {
+    for (int j = 0; j < MAX_DEGREE; j += 1) {
+      if (u_exponent <= j) break;
       if (norm(p, zeros[j]) < u_eps) {
         b += u_brightness*float(j+1);
       }
