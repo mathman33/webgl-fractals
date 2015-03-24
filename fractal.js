@@ -82,7 +82,7 @@
     var aLocation = gl.getUniformLocation(shaderProgram, "u_a");
     var epsLocation = gl.getUniformLocation(shaderProgram, "u_eps");
 
-    gl.uniform1f(aspectLocation, 4/3);
+    gl.uniform1f(aspectLocation, canvas.width/canvas.height);
     gl.uniform2fv(centerLocation, this.settings.center);
     gl.uniform1f(zoomLocation, this.settings.zoom);
     gl.uniform1f(brightnessLocation, this.settings.brightness);
@@ -97,7 +97,7 @@
   }
 
   Fractal.prototype.set = function(prop, value) {
-    this[prop] = value;
+    this.settings[prop] = value;
     this.redraw = true;
   };
 

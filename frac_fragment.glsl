@@ -3,7 +3,7 @@ precision highp float;
 #define PI 3.141592653589793238462643383279
 const int MAX_DEGREE = 300;
 const int ITERATIONS = 400;
-const int EXPONENTS = 3;
+const int EXPONENTS = 7;
 
 uniform vec2 u_center;
 uniform float u_zoom;
