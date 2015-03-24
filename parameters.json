@@ -2,6 +2,7 @@
   "center": [-20, -5],
   "zoom": 250.0,
   "brightness": 0.5,
+  "color": [0.3, 0.55, 0.6],
 
   "exponent": 7,
   "a": [1, 0.84],

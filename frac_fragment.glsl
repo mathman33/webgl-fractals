@@ -7,6 +7,7 @@ const int ITERATIONS = 400;
 uniform vec2 u_center;
 uniform float u_zoom;
 uniform float u_brightness;
+uniform vec3 u_color;
 uniform int u_exponent;
 uniform vec2 u_a;
 uniform float u_eps;
@@ -77,5 +78,5 @@ void main() {
     }
   }
 
-  gl_FragColor = vec4((b/float(ITERATIONS))*vec3(0.3, 0.55, 0.6), 1.0);
+  gl_FragColor = vec4((b/float(ITERATIONS))*u_color, 1.0);
 }
