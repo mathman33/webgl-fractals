@@ -3,7 +3,7 @@ precision highp float;
 #define PI 3.141592653589793238462643383279
 const int MAX_DEGREE = 300;
 const int ITERATIONS = 400;
-const int EXPONENTS = 3;
+const int EXPONENTS = 5;
 
 uniform vec2 u_center;
 uniform float u_zoom;
@@ -77,5 +77,5 @@ void main() {
     }
   }
 
-  gl_FragColor = vec4((b/float(ITERATIONS))*vec3(0.3, 0.55, 0.6), 1.0);
+  gl_FragColor = vec4((b/float(ITERATIONS))*vec3(1.0, 0.89, 0.7656), 1.0);
 }

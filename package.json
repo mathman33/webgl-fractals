@@ -3,7 +3,12 @@
   "main": "index.html",
   "window": {
     "toolbar": true,
-    "width": 800,
-    "height": 600
+    // FOR SAVING HIGHER RESOLUTION IMAGES
+    // don't go higher than this... my computer
+    // will break
+    // "width": 1800,
+    // "height": 1350
+    "width" : 800,
+    "height" : 600
   }
 }
