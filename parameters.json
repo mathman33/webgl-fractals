@@ -1,10 +1,11 @@
 {
-  "center": [-20, -5],
-  "zoom": 250.0,
-  "brightness": 0.5,
+  "center": [0, 0],
+  "zoom": 0.5,
+  "brightness": 1.0,
   "color": [0.3, 0.55, 0.6],
 
-  "exponent": 7,
-  "a": [1, 0.84],
+  "exponent": 3,
+  "iterations": 400,
+  "a": [1.1666666, 0.977],
   "eps": 0.02
 }

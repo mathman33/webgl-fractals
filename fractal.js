@@ -10,9 +10,12 @@
     ])
   };
 
-  function makeShaderProgram(gl) {
-    var fragmentShaderSource = fs.readFileSync("frac_fragment.glsl");
-    var vertexShaderSource = fs.readFileSync("frac_vertex.glsl");
+  function makeShaderProgram(gl, exponent, iterations) {
+    var fragmentShaderSource = fs.readFileSync("frac_fragment.glsl", {encoding: "utf-8"});
+    var vertexShaderSource = fs.readFileSync("frac_vertex.glsl", {encoding: "utf-8"});
+
+    fragmentShaderSource = fragmentShaderSource.replace(/\{\{EXPONENT\}\}/g, ""+exponent).replace(/\{\{ITERATIONS\}\}/g, ""+iterations);
+    console.log(fragmentShaderSource);
 
     var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
     gl.shaderSource(fragmentShader, fragmentShaderSource);
@@ -40,22 +43,39 @@
   document.body.appendChild(canvas);
 
   // Get the WebGL context
-  var gl = canvas.getContext("webgl", {preserveDrawingBuffer: true});
+  var gl = canvas.getContext("webgl", {
+    antialias: true,
+    preserveDrawingBuffer: true  // enable saving the canvas as an image.
+  });
 
   // Load the paddle geometry into GPU memory
   var buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.bufferData(gl.ARRAY_BUFFER, Models["quad"], gl.STATIC_DRAW);
 
-  var shaderProgram = makeShaderProgram(gl);
+  var settings = JSON.parse(fs.readFileSync("parameters.json"));
+  var shaderProgram = makeShaderProgram(gl, settings.exponent, settings.iterations);
 
-  function Fractal(gl, model) {
+  function Fractal(gl, model, settings) {
     this.gl = gl;
     this.model = model;
 
     this.redraw = true;
-    this.settings = JSON.parse(fs.readFileSync("parameters.json"));
+    this.settings = settings;
     this.lastset = fs.statSync("parameters.json").mtime
+
+    this.lastkeys = {
+      up: 0,
+      down: 0,
+      left: 0,
+      right: 0
+    };
+    this.keys = {
+      up: 0,
+      down: 0,
+      left: 0,
+      right: 0
+    };
   }
 
   Fractal.prototype.update = function() {
@@ -64,6 +84,24 @@
       this.lastset = fs.statSync("parameters.json").mtime;
       this.redraw = true;
     }
+    if (!this.redraw) {
+      if (this.keys.up - this.keys.down != 0) {
+        this.settings.center[1] += (this.keys.up - this.keys.down)/(10*this.settings.zoom);
+        this.redraw = true;
+      }
+      if (this.keys.right - this.keys.left != 0) {
+        this.settings.center[0] += (this.keys.right - this.keys.left)/(10*this.settings.zoom);
+        this.redraw = true;
+      }
+    }
+
+    // var tmp = this.lastkeys;
+    // this.lastkeys = this.keys;
+    // tmp.up = this.lastkeys.up;
+    // tmp.down = this.lastkeys.down;
+    // tmp.left = this.lastkeys.left;
+    // tmp.right = this.lastkeys.right;
+    // this.keys = tmp;
   };
 
   Fractal.prototype.draw = function() {
@@ -71,7 +109,6 @@
 
     // Render the tile geometry
     gl.useProgram(shaderProgram);
-    gl.clear(gl.COLOR_BUFFER_BIT);
 
     var vertexLocation = gl.getAttribLocation(shaderProgram, "a_vertex");
     var aspectLocation = gl.getUniformLocation(shaderProgram, "u_aspect");
@@ -97,6 +134,7 @@
     gl.enableVertexAttribArray(vertexLocation);
     gl.vertexAttribPointer(vertexLocation, 2, gl.FLOAT, false, 0, 0);
 
+    gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
@@ -105,19 +143,36 @@
     this.redraw = true;
   };
 
-  var world = new Fractal(gl, buffer);
+  var world = new Fractal(gl, buffer, settings);
 
   window.world = world;
   window.saveImage = function(filename) {
     fs.writeFileSync(filename, new Buffer(canvas.toDataURL("image/png").replace(/^data:image\/\w+;base64,/, ""), "base64"));
   }
 
+  window.onkeydown = function(ev) {
+    switch (ev.keyCode) {
+    case 65: world.keys.left = 1; break;
+    case 68: world.keys.right = 1; break;
+    case 87: world.keys.up = 1; break;
+    case 83: world.keys.down = 1; break;
+    }
+  }
+  window.onkeyup = function(ev) {
+    switch (ev.keyCode) {
+    case 65: world.keys.left = 0; break;
+    case 68: world.keys.right = 0; break;
+    case 87: world.keys.up = 0; break;
+    case 83: world.keys.down = 0; break;
+    }
+  }
+
   requestAnimationFrame(function onAnimationFrame() {
     requestAnimationFrame(onAnimationFrame);
     world.update();
     if (world.redraw) {
-      world.redraw = false;
       world.draw();
+      world.redraw = false;
     }
   });
 })(window);
