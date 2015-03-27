@@ -153,13 +153,14 @@
     gl.uniform2fv(rootsLocation, Array.prototype.concat.apply([], this.settings.roots));
     gl.uniform2fv(polyLocation, Array.prototype.concat.apply([], poly));
     gl.uniform2fv(derivLocation, Array.prototype.concat.apply([], deriv));
-    gl.uniform1f(aspectLocation, canvas.width/canvas.height);
     gl.uniform2fv(centerLocation, this.settings.center);
     gl.uniform1f(zoomLocation, this.settings.zoom);
     gl.uniform1f(brightnessLocation, this.settings.brightness);
     gl.uniform3fv(colorLocation, this.settings.color);
     gl.uniform2fv(aLocation, this.settings.a);
     gl.uniform1f(epsLocation, this.settings.eps);
+
+    gl.uniform1f(aspectLocation, canvas.width/canvas.height);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.model);
     gl.enableVertexAttribArray(vertexLocation);

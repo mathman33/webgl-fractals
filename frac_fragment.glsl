@@ -1,50 +1,52 @@
 precision highp float;
 
-#define PI 3.141592653589793238462643383279
+// Compile-time constants - {{}} are template variables
 const int ITERATIONS = {{ITERATIONS}};
 const int NUMROOTS = {{NUMROOTS}};
 
-varying vec2 v_vertex;
-
+// Camera control
 uniform vec2 u_center;
 uniform float u_zoom;
+
+// Color control
 uniform float u_brightness;
 uniform vec3 u_color;
+
+// Point transformation and tolerance
 uniform vec2 u_a;
 uniform float u_eps;
 
+// Fractal parameters
+uniform vec2 u_roots[NUMROOTS+1];
 uniform vec2 u_poly[NUMROOTS+1];
 uniform vec2 u_deriv[NUMROOTS+1];
-uniform vec2 u_roots[NUMROOTS+1];
+
+// Current point
+varying vec2 v_vertex;
 
 
+// Complex multiplication
 vec2 compmul(const vec2 a, const vec2 b) {
   return b[0]*a + b[1]*vec2(-a[1], a[0]);
 }
 
+// Complex division
 vec2 compdiv(const vec2 a, const vec2 b){
-  return compmul(a, b*vec2(1, -1)) / (b[0]*b[0] + b[1]*b[1]);
+  return compmul(a, b*vec2(1, -1)) / dot(b, b);
 }
 
-float norm(const vec2 a, const vec2 b) {
-  return sqrt((a[0] - b[0])*(a[0] - b[0]) + (a[1] - b[1])*(a[1] - b[1]));
-}
-
-float norm(const vec3 a, const vec3 b) {
-  return sqrt((a[0] - b[0])*(a[0] - b[0]) + (a[1] - b[1])*(a[1] - b[1]) + (a[2] - b[2])*(a[2] - b[2]));
-}
-
+// Computes z - a*poly(z)/deriv(z)
 vec2 approximation(const vec2 z) {
-  vec2 zx = vec2(1, 0);
-  vec2 numerator = vec2(0, 0);
-  vec2 denominator = vec2(0, 0);
+  vec2 zx = vec2(1, 0);  // Collects successive powers of z
+  vec2 numerator = vec2(0, 0);  // Collects the polynomial's value
+  vec2 denominator = vec2(0, 0);  // Collects the derivative's value
   for (int i = 0; i < NUMROOTS+1; i += 1) {
     numerator += compmul(u_poly[i], zx);
     denominator += compmul(u_deriv[i], zx);
     zx = compmul(zx, z);
   }
 
-  return compdiv(numerator, denominator);
+  return z - compmul(u_a, compdiv(numerator, denominator));
 }
 
 void main() {
@@ -61,16 +63,12 @@ void main() {
 
   float b = 0.0;
   for (int i = 0; i < ITERATIONS; i += 1) {
-    p -= compmul(u_a, approximation(p));
+    p = approximation(p);
 
     for (int j = 0; j < NUMROOTS; j += 1) {
       if (dot(p - u_roots[j], p - u_roots[j]) < tolerance) {
-        b = float(ITERATIONS-i)*float(j+1)*u_brightness;
+        b += float(j+1)*u_brightness;
       }
-    }
-
-    if (b > 0.0) {
-      break;
     }
   }
 
