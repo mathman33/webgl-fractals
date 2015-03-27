@@ -3,7 +3,7 @@
   "main": "index.html",
   "window": {
     "toolbar": true,
-    "width": 768,
+    "width": 1024,
     "height": 768
   }
 }

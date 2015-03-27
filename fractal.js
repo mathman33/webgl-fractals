@@ -10,11 +10,43 @@
     ])
   };
 
-  function makeShaderProgram(gl, exponent, iterations) {
+  function compadd(a, b) {
+    return [a[0] + b[0], a[1] + b[1]];
+  }
+
+  function compmul(a, b) {
+    return [a[0]*b[0] - a[1]*b[1], a[0]*b[1] + a[1]*b[0]];
+  }
+
+  // Generates a complex polynomial from its roots
+  function polyroots(roots) {
+    var poly = [[1, 0]];
+    poly[-1] = [0, 0]; // magic index makes for a cleaner multiplication loop
+    for (var i = 0; i < roots.length; ++i) {
+      poly.push([0, 0]);
+      for (var j = i+1; j >= 0; --j) {
+        poly[j] = compadd(poly[j-1], compmul(poly[j], compmul(roots[i], [-1, 0])));
+      }
+    }
+
+    return poly;
+  }
+
+  // Takes the derivative of a complex polynomial
+  function polyD(poly) {
+    var D = [];
+    for (var i = 1; i < poly.length; ++i) {
+      D.push(compmul([i, 0], poly[i]));
+    }
+    D.push([0, 0]);
+    return D;
+  }
+
+  function makeShaderProgram(gl, roots, exponent, iterations) {
     var fragmentShaderSource = fs.readFileSync("frac_fragment.glsl", {encoding: "utf-8"});
     var vertexShaderSource = fs.readFileSync("frac_vertex.glsl", {encoding: "utf-8"});
 
-    fragmentShaderSource = fragmentShaderSource.replace(/\{\{EXPONENT\}\}/g, ""+exponent).replace(/\{\{ITERATIONS\}\}/g, ""+iterations);
+    fragmentShaderSource = fragmentShaderSource.replace(/\{\{EXPONENT\}\}/g, ""+exponent).replace(/\{\{ITERATIONS\}\}/g, ""+iterations).replace(/\{\{NUMROOTS\}\}/g, ""+roots.length);
     console.log(fragmentShaderSource);
 
     var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
@@ -25,7 +57,7 @@
     var vertexShader = gl.createShader(gl.VERTEX_SHADER);
     gl.shaderSource(vertexShader, vertexShaderSource);
     gl.compileShader(vertexShader);
-    //console.log(gl.getShaderInfoLog(vertexShader));
+    console.log(gl.getShaderInfoLog(vertexShader));
 
     var program = gl.createProgram();
     gl.attachShader(program, fragmentShader);
@@ -54,7 +86,7 @@
   gl.bufferData(gl.ARRAY_BUFFER, Models["quad"], gl.STATIC_DRAW);
 
   var settings = JSON.parse(fs.readFileSync("parameters.json"));
-  var shaderProgram = makeShaderProgram(gl, settings.exponent, settings.iterations);
+  var shaderProgram = makeShaderProgram(gl, settings.roots, settings.exponent, settings.iterations);
 
   function Fractal(gl, model, settings) {
     this.gl = gl;
@@ -64,17 +96,13 @@
     this.settings = settings;
     this.lastset = fs.statSync("parameters.json").mtime
 
-    this.lastkeys = {
-      up: 0,
-      down: 0,
-      left: 0,
-      right: 0
-    };
     this.keys = {
       up: 0,
       down: 0,
       left: 0,
-      right: 0
+      right: 0,
+      zoomin: 0,
+      zoomout: 0
     };
   }
 
@@ -86,22 +114,18 @@
     }
     if (!this.redraw) {
       if (this.keys.up - this.keys.down != 0) {
-        this.settings.center[1] += (this.keys.up - this.keys.down)/(10*this.settings.zoom);
+        this.settings.center[1] += (this.keys.up - this.keys.down)/(30*this.settings.zoom);
         this.redraw = true;
       }
       if (this.keys.right - this.keys.left != 0) {
-        this.settings.center[0] += (this.keys.right - this.keys.left)/(10*this.settings.zoom);
+        this.settings.center[0] += (this.keys.right - this.keys.left)/(30*this.settings.zoom);
+        this.redraw = true;
+      }
+      if (this.keys.zoomin - this.keys.zoomout != 0) {
+        this.settings.zoom *= Math.pow(0.990, this.keys.zoomin - this.keys.zoomout);
         this.redraw = true;
       }
     }
-
-    // var tmp = this.lastkeys;
-    // this.lastkeys = this.keys;
-    // tmp.up = this.lastkeys.up;
-    // tmp.down = this.lastkeys.down;
-    // tmp.left = this.lastkeys.left;
-    // tmp.right = this.lastkeys.right;
-    // this.keys = tmp;
   };
 
   Fractal.prototype.draw = function() {
@@ -113,20 +137,27 @@
     var vertexLocation = gl.getAttribLocation(shaderProgram, "a_vertex");
     var aspectLocation = gl.getUniformLocation(shaderProgram, "u_aspect");
 
+    var polyLocation = gl.getUniformLocation(shaderProgram, "u_poly");
+    var derivLocation = gl.getUniformLocation(shaderProgram, "u_deriv");
+    var rootsLocation = gl.getUniformLocation(shaderProgram, "u_roots");
     var centerLocation = gl.getUniformLocation(shaderProgram, "u_center");
     var zoomLocation = gl.getUniformLocation(shaderProgram, "u_zoom");
     var brightnessLocation = gl.getUniformLocation(shaderProgram, "u_brightness");
     var colorLocation = gl.getUniformLocation(shaderProgram, "u_color");
-    var exponentLocation = gl.getUniformLocation(shaderProgram, "u_exponent");
     var aLocation = gl.getUniformLocation(shaderProgram, "u_a");
     var epsLocation = gl.getUniformLocation(shaderProgram, "u_eps");
 
+    var poly = polyroots(this.settings.roots);
+    var deriv = polyD(poly);
+
+    gl.uniform2fv(rootsLocation, Array.prototype.concat.apply([], this.settings.roots));
+    gl.uniform2fv(polyLocation, Array.prototype.concat.apply([], poly));
+    gl.uniform2fv(derivLocation, Array.prototype.concat.apply([], deriv));
     gl.uniform1f(aspectLocation, canvas.width/canvas.height);
     gl.uniform2fv(centerLocation, this.settings.center);
     gl.uniform1f(zoomLocation, this.settings.zoom);
     gl.uniform1f(brightnessLocation, this.settings.brightness);
     gl.uniform3fv(colorLocation, this.settings.color);
-    gl.uniform1i(exponentLocation, this.settings.exponent);
     gl.uniform2fv(aLocation, this.settings.a);
     gl.uniform1f(epsLocation, this.settings.eps);
 
@@ -156,6 +187,8 @@
     case 68: world.keys.right = 1; break;
     case 87: world.keys.up = 1; break;
     case 83: world.keys.down = 1; break;
+    case 16: world.keys.zoomin = 1; break;
+    case 32: world.keys.zoomout = 1; break;
     }
   }
   window.onkeyup = function(ev) {
@@ -164,6 +197,8 @@
     case 68: world.keys.right = 0; break;
     case 87: world.keys.up = 0; break;
     case 83: world.keys.down = 0; break;
+    case 16: world.keys.zoomin = 0; break;
+    case 32: world.keys.zoomout = 0; break;
     }
   }
 
