@@ -44,11 +44,14 @@ float norm(vec3 a, vec3 b) {
 }
 
 vec2 approximation(vec2 z, int n) {
-  vec2 z2 = comppow(z, n-1);
-  vec2 poly = compmul(z2, z) - vec2(1.0, 0.0);
-  vec2 dpoly = float(n-1)*z2;
+  vec2 zsin = sin(z);
+  vec2 zsin2 = sin(zsin);
+  vec2 zcos = sin(z);
+  vec2 p = zsin2 + cos( zsin2);
+  vec2 dz = compmul(zcos, cos(zsin));
+  vec2 dp = dz - compmul(dz, sin(zsin2));
 
-  return compdiv(poly, dpoly);
+  return compdiv(p, dp);
 }
 
 vec2 polar(float mag, float ang) {
