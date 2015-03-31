@@ -1,81 +1,76 @@
 precision highp float;
 
-#define PI 3.141592653589793238462643383279
-const int MAX_DEGREE = 300;
-const int ITERATIONS = 400;
-const int EXPONENTS = 5;
+// Compile-time constants - {{}} are template variables
+const int ITERATIONS = {{ITERATIONS}};
+const int NUMROOTS = {{NUMROOTS}};
 
+// Camera control
 uniform vec2 u_center;
 uniform float u_zoom;
+
+// Color control
 uniform float u_brightness;
+uniform vec3 u_color;
+
+// Point transformation and tolerance
 uniform vec2 u_a;
 uniform float u_eps;
 
+// Fractal parameters
+uniform vec2 u_roots[NUMROOTS+1];
+uniform vec2 u_poly[NUMROOTS+1];
+uniform vec2 u_deriv[NUMROOTS+1];
+
+// Current point
 varying vec2 v_vertex;
 
-vec2 compmul(vec2 a, vec2 b) {
-  return vec2(
-    a[0]*b[0] - a[1]*b[1],
-    a[0]*b[1] + a[1]*b[0]
-  );
+
+// Complex multiplication
+vec2 compmul(const vec2 a, const vec2 b) {
+  return b[0]*a + b[1]*vec2(-a[1], a[0]);
 }
 
-vec2 compdiv(vec2 a, vec2 b){
-  return compmul(a, b*vec2(1, -1)) / (b[0]*b[0] + b[1]*b[1]);
+// Complex division
+vec2 compdiv(const vec2 a, const vec2 b){
+  return compmul(a, b*vec2(1, -1)) / dot(b, b);
 }
 
-vec2 comppow(vec2 a, int n) {
-  vec2 r = vec2(1.0, 0.0);
-  for (int i = 0; i < MAX_DEGREE; ++i) {
-    if (n <= i) {
-      break;
-    }
-    r = compmul(r, a);
+// Computes z - a*poly(z)/deriv(z)
+vec2 approximation(const vec2 z) {
+  vec2 zx = vec2(1, 0);  // Collects successive powers of z
+  vec2 numerator = vec2(0, 0);  // Collects the polynomial's value
+  vec2 denominator = vec2(0, 0);  // Collects the derivative's value
+  for (int i = 0; i < NUMROOTS+1; i += 1) {
+    numerator += compmul(u_poly[i], zx);
+    denominator += compmul(u_deriv[i], zx);
+    zx = compmul(zx, z);
   }
-  return r;
+
+  return z - compmul(u_a, compdiv(numerator, denominator));
 }
-
-float norm(vec2 a, vec2 b) {
-  return sqrt((a[0] - b[0])*(a[0] - b[0]) + (a[1] - b[1])*(a[1] - b[1]));
-}
-
-float norm(vec3 a, vec3 b) {
-  return sqrt((a[0] - b[0])*(a[0] - b[0]) + (a[1] - b[1])*(a[1] - b[1]) + (a[2] - b[2])*(a[2] - b[2]));
-}
-
-vec2 approximation(vec2 z, int n) {
-  vec2 z2 = comppow(z, n-1);
-  vec2 poly = compmul(z2, z) - vec2(1.0, 0.0);
-  vec2 dpoly = float(n-1)*z2;
-
-  return compdiv(poly, dpoly);
-}
-
-vec2 polar(float mag, float ang) {
-  return vec2(mag*cos(ang), mag*sin(ang));
-}
-
 
 void main() {
-  vec2 zeros[EXPONENTS];
-  for (int i = 0; i < EXPONENTS; i += 1) {
-    zeros[i] = polar(1.0, float(i)/float(EXPONENTS) * 2.0*PI);
-  }
-
+  float tolerance = u_eps*u_eps;
   vec2 p = v_vertex / u_zoom + u_center;
-  //vec2 p = v_vertex * 2850.0;     // best zoom for degree-6
-  //vec2 p = v_vertex * 45000000.0; // best zoom for degree-3
+
+  // // Highlight the roots
+  // for (int i = 0; i < NUMROOTS; i += 1) {
+  //   if (dot(p - u_roots[i], p - u_roots[i]) < 0.01) {
+  //     gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
+  //     return;
+  //   }
+  // }
 
   float b = 0.0;
   for (int i = 0; i < ITERATIONS; i += 1) {
-    p -= compmul(u_a, approximation(p, EXPONENTS));
+    p = approximation(p);
 
-    for (int j = 0; j < EXPONENTS; j += 1) {
-      if (norm(p, zeros[j]) < u_eps) {
-        b += u_brightness*float(j+1);
+    for (int j = 0; j < NUMROOTS; j += 1) {
+      if (dot(p - u_roots[j], p - u_roots[j]) < tolerance) {
+        b += float(j+1)*u_brightness;
       }
     }
   }
 
-  gl_FragColor = vec4((b/float(ITERATIONS))*vec3(1.0, 0.89, 0.7656), 1.0);
+  gl_FragColor = vec4((b/float(ITERATIONS))*u_color, 1.0);
 }
