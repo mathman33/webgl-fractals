@@ -45,11 +45,10 @@ float norm(vec3 a, vec3 b) {
 
 vec2 approximation(vec2 z, int n) {
   vec2 zsin = sin(z);
-  vec2 zsin2 = sin(zsin);
   vec2 zcos = sin(z);
-  vec2 p = zsin2 + cos( zsin2);
-  vec2 dz = compmul(zcos, cos(zsin));
-  vec2 dp = dz - compmul(dz, sin(zsin2));
+
+  vec2 p = sin(zsin);
+  vec2 dp = compmul(cos(zsin), zcos);
 
   return compdiv(p, dp);
 }

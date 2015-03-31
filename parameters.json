@@ -1,7 +1,7 @@
 {
-  "center": [0, 0],
+  "center": [10, 0],
   "zoom": 0.1,
-  "brightness": 10,
-  "a": [1.0, 0.0],
-  "eps": 1.5
+  "brightness": 40,
+  "a": [1.0, 1],
+  "eps": 0.5
 }
