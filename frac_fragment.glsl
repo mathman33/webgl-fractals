@@ -43,12 +43,32 @@ float norm(vec3 a, vec3 b) {
   return sqrt((a[0] - b[0])*(a[0] - b[0]) + (a[1] - b[1])*(a[1] - b[1]) + (a[2] - b[2])*(a[2] - b[2]));
 }
 
-vec2 approximation(vec2 z, int n) {
-  vec2 zsin = sin(z);
-  vec2 zcos = sin(z);
+// vec2 approximation(vec2 z, int n) {
+//   vec2 s = sin(z);
+//   vec2 c = cos(z);
+//   vec2 ss = sin(s);
+//   vec2 sss = sin(ss);
+//   vec2 ssss = sin(sss);
+//   vec2 sc = sin(c);
+//   vec2 csc = cos(sc);
 
-  vec2 p = sin(zsin);
-  vec2 dp = compmul(cos(zsin), zcos);
+//   vec2 p = ssss + csc;
+//   vec2 dp = compmul(cos(sss), compmul(cos(ss), compmul(cos(s), c))) + compmul(sin(sc), compmul(cos(c), s));
+
+//   return compdiv(p, dp);
+// }
+
+vec2 approximation(vec2 z, int n) {
+  vec2 s = sin(z);
+  vec2 c = cos(z);
+  vec2 ss = sin(s);
+  vec2 sss = sin(ss);
+  vec2 ssss = sin(sss);
+  vec2 sc = sin(c);
+  vec2 csc = cos(sc);
+
+  vec2 p = ssss + csc;
+  vec2 dp = compmul(cos(sss), compmul(cos(ss), compmul(cos(s), c))) + compmul(sin(sc), compmul(cos(c), s));
 
   return compdiv(p, dp);
 }
